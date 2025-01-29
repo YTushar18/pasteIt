@@ -1,16 +1,27 @@
 console.log("Smart Clipboard content script loaded!");
 
+// Helper function to safely access chrome.storage.local
+function getClipboardData(callback) {
+    if (chrome?.runtime?.id) { // Ensures extension context is still valid
+        chrome.storage.local.get({ clipboard: [] }, callback);
+    } else {
+        console.warn("Warning: Extension context invalidated. Reloading script...");
+    }
+}
+
 // Capture copied text and store it in local storage
 document.addEventListener("copy", async () => {
     let text = document.getSelection().toString().trim();
     console.log("Copied text:", text);
+
     if (text !== "") {
-        chrome.storage.local.get({ clipboard: [] }, (data) => {
+        getClipboardData((data) => {
             let clipboard = data.clipboard || [];
             if (!clipboard.includes(text)) {
                 clipboard.push(text);
-                chrome.storage.local.set({ clipboard });
-                console.log("Stored in clipboard:", clipboard);
+                chrome.storage.local.set({ clipboard }, () => {
+                    console.log("Stored in clipboard:", clipboard);
+                });
             }
         });
     }
@@ -20,8 +31,9 @@ document.addEventListener("copy", async () => {
 document.addEventListener("focusin", (event) => {
     let element = event.target;
     console.log("Focused on:", element.tagName);
+
     if (element.tagName === "INPUT" || element.tagName === "TEXTAREA") {
-        chrome.storage.local.get("clipboard", ({ clipboard }) => {
+        getClipboardData(({ clipboard }) => {
             console.log("Showing popup for:", element);
             showClipboardPopup(element, clipboard || []);
         });
@@ -56,8 +68,13 @@ function showClipboardPopup(targetField, clipboardData) {
     popup.style.top = `${rect.bottom + window.scrollY + 5}px`;
     popup.style.left = `${rect.left + window.scrollX}px`;
 
-    // Add text snippets as clickable buttons
-    clipboardData.forEach((text) => {
+    // Add text snippets as clickable buttons with delete option
+    clipboardData.forEach((text, index) => {
+        let tagContainer = document.createElement("div");
+        tagContainer.style.display = "flex";
+        tagContainer.style.alignItems = "center";
+        tagContainer.style.position = "relative";
+
         let tag = document.createElement("span");
         tag.innerText = text;
         tag.style.padding = "6px 10px";
@@ -68,6 +85,7 @@ function showClipboardPopup(targetField, clipboardData) {
         tag.style.cursor = "pointer";
         tag.style.fontSize = "14px";
         tag.style.whiteSpace = "nowrap";
+        tag.style.marginRight = "5px";
 
         tag.addEventListener("click", () => {
             console.log("Pasting text:", text);
@@ -75,7 +93,38 @@ function showClipboardPopup(targetField, clipboardData) {
             popup.remove();
         });
 
-        popup.appendChild(tag);
+        // Add delete (X) button
+        let deleteButton = document.createElement("span");
+        deleteButton.innerText = "✖";
+        deleteButton.style.position = "absolute";
+        deleteButton.style.top = "0px";
+        deleteButton.style.right = "0px";
+        deleteButton.style.fontSize = "12px";
+        deleteButton.style.color = "#fff";
+        deleteButton.style.cursor = "pointer";
+        deleteButton.style.background = "red";
+        deleteButton.style.padding = "2px 5px";
+        deleteButton.style.borderRadius = "50%";
+        deleteButton.style.marginLeft = "5px";
+        deleteButton.style.display = "none"; // Initially hidden
+
+        // Show delete button on hover
+        tagContainer.addEventListener("mouseenter", () => deleteButton.style.display = "inline-block");
+        tagContainer.addEventListener("mouseleave", () => deleteButton.style.display = "none");
+
+        deleteButton.addEventListener("click", (event) => {
+            event.stopPropagation(); // Prevent tag click from firing
+            clipboardData.splice(index, 1);
+            chrome.storage.local.set({ clipboard: clipboardData }, () => {
+                console.log("Removed item:", text);
+                popup.remove(); // Re-render popup
+                showClipboardPopup(targetField, clipboardData);
+            });
+        });
+
+        tagContainer.appendChild(tag);
+        tagContainer.appendChild(deleteButton);
+        popup.appendChild(tagContainer);
     });
 
     // Close popup when clicking outside
