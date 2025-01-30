@@ -1,5 +1,3 @@
-Sure! Here’s a vibrant and well-structured GitHub README for your Smart Clipboard Browser Extension 🚀.
-
 📋 Smart Clipboard - Your Ultimate Copy-Paste Manager 🚀
 
 📌 Smart Clipboard is a powerful browser extension that lets you store multiple copied text snippets, autofill forms, and reorder your clipboard with drag & drop. Whether you’re filling out job applications, saving reusable text, or just copying multiple things at once, this extension makes life easier!
