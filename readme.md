@@ -7,8 +7,11 @@
 🔹 Core Clipboard Functions
 
 ✅ Multi-Text Clipboard – Store multiple copied snippets for easy access.
+
 ✅ Click-to-Paste – Instantly paste a stored snippet into any input field.
+
 ✅ Persistent Storage – Clipboard stays even after browser restart.
+
 ✅ Popup UI – Click inside a text field to see the floating clipboard.
 
 🔹 Clipboard Management
