@@ -2,10 +2,16 @@ console.log("Smart Clipboard content script loaded!");
 
 // Helper function to safely access chrome.storage.local
 function getClipboardData(callback) {
-    if (chrome?.runtime?.id) { // Ensures extension context is still valid
+    if (chrome?.runtime?.id) { 
+        // Ensure extension context is valid before accessing storage
         chrome.storage.local.get({ clipboard: [] }, callback);
     } else {
-        console.warn("Warning: Extension context invalidated. Reloading script...");
+        console.warn("Warning: Extension context invalidated. Attempting to reload script...");
+
+        // Re-inject content script if needed
+        chrome.runtime.sendMessage({ action: "reloadContentScript" }, (response) => {
+            console.log("Content script reloaded:", response);
+        });
     }
 }
 
@@ -27,12 +33,22 @@ document.addEventListener("copy", async () => {
     }
 });
 
+// Store last pasted value to prevent accidental clearing
+
+let lastPastedValueMap = new WeakMap();
+
 // Show popup when clicking inside an input field
 document.addEventListener("focusin", (event) => {
     let element = event.target;
     console.log("Focused on:", element.tagName);
 
     if (element.tagName === "INPUT" || element.tagName === "TEXTAREA") {
+        // Prevent clearing if the value was pasted by the extension
+        // if (lastPastedValueMap.has(element) && element.value === lastPastedValueMap.get(element)) {
+        //     console.log("Preserving pasted text. Not clearing.");
+        //     return;
+        // }
+
         getClipboardData(({ clipboard }) => {
             console.log("Showing popup for:", element);
             showClipboardPopup(element, clipboard || []);
@@ -94,6 +110,13 @@ function showClipboardPopup(targetField, clipboardData) {
 
     popup.appendChild(closeButton);
 
+    // Create a container for draggable items
+    let listContainer = document.createElement("div");
+    listContainer.style.display = "flex";
+    listContainer.style.flexWrap = "wrap";
+    listContainer.style.width = "100%";
+    listContainer.style.gap = "5px"; // 🛠 Add space between items
+
     // Add text snippets as clickable buttons with delete option
     clipboardData.forEach((text, index) => {
         let tagContainer = document.createElement("div");
@@ -116,12 +139,59 @@ function showClipboardPopup(targetField, clipboardData) {
         tag.style.wordWrap = "break-word"; // 🛠 Break long word
         tag.style.maxWidth = "100%"; // 🛠 Allow tag to grow
         tag.style.marginRight = "5px"; //check !
+        tag.style.userSelect = "none"; // Prevents accidental text selection
+        tag.draggable = true; // Enable drag & drop
+        tag.dataset.index = index; // Store original index
 
         tag.addEventListener("click", () => {
-            console.log("Pasting text:", text);
-            targetField.value = text;
+            // Preserve existing text if already present
+            // if (targetField.value.trim() === "" || targetField.value === lastPastedValueMap.get(targetField)) {
+            //     targetField.value = text; // Paste text
+            //     lastPastedValueMap.set(targetField, text); // Store last pasted value
+            // } else {
+            //     console.log("Field already has user-edited content. Not overwriting.");
+            // }
+            // Replace the text in the field only when a tag is selected
+            targetField.value = text; 
+            targetField.focus(); // Ensure focus stays in the field after pasting
             popup.remove();
         });
+
+        // Drag & Drop Events
+        tag.addEventListener("dragstart", (event) => {
+            event.dataTransfer.setData("text/plain", event.target.dataset.index);
+            tag.style.opacity = "0.5"; // Visual feedback when dragging
+        });
+
+        tag.addEventListener("dragend", (event) => {
+            event.target.style.opacity = "1"; // Reset opacity
+        });
+
+        tag.addEventListener("dragover", (event) => {
+            event.preventDefault(); // Allow dropping
+        });
+
+        tag.addEventListener("drop", (event) => {
+            event.preventDefault();
+            let draggedIndex = event.dataTransfer.getData("text/plain");
+            let targetIndex = event.target.dataset.index;
+
+            if (draggedIndex !== targetIndex) {
+                console.log(`Reordering from ${draggedIndex} to ${targetIndex}`);
+                let newClipboard = [...clipboardData];
+                let movedItem = newClipboard.splice(draggedIndex, 1)[0];
+                newClipboard.splice(targetIndex, 0, movedItem);
+
+                // Update storage and re-render popup
+                chrome.storage.local.set({ clipboard: newClipboard }, () => {
+                    console.log("Clipboard reordered:", newClipboard);
+                    popup.remove();
+                    showClipboardPopup(targetField, newClipboard);
+                });
+            }
+        });
+
+        listContainer.appendChild(tag);
 
         // Add delete (X) button
         let deleteButton = document.createElement("span");
@@ -156,6 +226,8 @@ function showClipboardPopup(targetField, clipboardData) {
         tagContainer.appendChild(tag);
         tagContainer.appendChild(deleteButton);
         popup.appendChild(tagContainer);
+
+        
     });
 
     // Close popup when clicking outside

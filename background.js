@@ -55,3 +55,10 @@ function autoClearClipboard(minutes) {
         });
     }, minutes * 60 * 1000);
 }
+
+chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+    if (message.action === "reloadContentScript") {
+        console.log("Reloading content script...");
+        sendResponse({ status: "Content script reload attempted." });
+    }
+});
