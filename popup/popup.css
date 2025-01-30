@@ -2,10 +2,10 @@ body {
     width: 250px;
     padding: 10px;
     font-family: Arial, sans-serif;
+    text-align: center;
 }
 
 h2 {
-    text-align: center;
     font-size: 18px;
 }
 
@@ -14,10 +14,11 @@ h2 {
     flex-wrap: wrap;
     gap: 5px;
     margin: 10px 0;
+    justify-content: center;
 }
 
 .clipboard-item {
-    padding: 5px 10px;
+    padding: 6px 10px;
     border: 1px solid #007bff;
     background: #007bff;
     color: #fff;
@@ -26,10 +27,18 @@ h2 {
 }
 
 #clearClipboard {
+    display: block;  /* Ensure it is visible */
     width: 100%;
     padding: 8px;
     background: red;
     color: white;
     border: none;
+    border-radius: 5px;
     cursor: pointer;
+    font-size: 14px;
+    margin-top: 10px; /* Adds spacing */
+}
+
+#clearClipboard:hover {
+    background: darkred;
 }
