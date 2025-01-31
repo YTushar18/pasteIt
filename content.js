@@ -1,4 +1,4 @@
-console.log("Smart Clipboard content script loaded!");
+console.log("PasteIt content script loaded!");
 
 // Helper function to safely access chrome.storage.local
 function getClipboardData(callback) {

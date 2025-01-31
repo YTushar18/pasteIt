@@ -1,6 +1,6 @@
 {
   "manifest_version": 3,
-  "name": "Smart Clipboard",
+  "name": "PasteIt",
   "version": "1.0",
   "description": "Capture multiple copied text snippets and use them to autofill web forms.",
   "permissions": ["storage", "activeTab", "scripting", "clipboardRead", "clipboardWrite"],

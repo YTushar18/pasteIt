@@ -1,4 +1,4 @@
-console.log("Smart Clipboard background script loaded!");
+console.log("PasteIt background script loaded!");
 
 // Initialize clipboard storage when the extension is installed
 chrome.runtime.onInstalled.addListener(() => {
@@ -7,7 +7,7 @@ chrome.runtime.onInstalled.addListener(() => {
             chrome.storage.local.set({ clipboard: [] });
         }
     });
-    console.log("Smart Clipboard Extension Installed.");
+    console.log("PasteIt Extension Installed.");
 });
 
 // Ensure clipboard persists when Chrome starts
