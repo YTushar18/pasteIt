@@ -2,16 +2,14 @@ console.log("Smart Clipboard content script loaded!");
 
 // Helper function to safely access chrome.storage.local
 function getClipboardData(callback) {
-    if (chrome?.runtime?.id) { 
-        // Ensure extension context is valid before accessing storage
-        chrome.storage.local.get({ clipboard: [] }, callback);
-    } else {
-        console.warn("Warning: Extension context invalidated. Attempting to reload script...");
+    try {
+        if (!chrome.runtime?.id) {
+            throw new Error("⚠️ Extension context invalidated!");
+        }
 
-        // Re-inject content script if needed
-        chrome.runtime.sendMessage({ action: "reloadContentScript" }, (response) => {
-            console.log("Content script reloaded:", response);
-        });
+        chrome.storage.local.get({ clipboard: [] }, callback);
+    } catch (error) {
+        console.warn(error.message);
     }
 }
 
@@ -56,6 +54,17 @@ document.addEventListener("focusin", (event) => {
     }
 });
 
+
+// ?? Added new: Popup fade-out animation
+function closeClipboardPopup() {
+    let popup = document.getElementById("clipboard-popup");
+    if (popup) {
+        popup.style.opacity = "0";
+        popup.style.transform = "scale(0.9)";
+        setTimeout(() => popup.remove(), 200);
+    }
+}
+
 // Function to display popup with clipboard text snippets
 function showClipboardPopup(targetField, clipboardData) {
     console.log("Popup triggered, clipboard contains:", clipboardData);
@@ -80,6 +89,7 @@ function showClipboardPopup(targetField, clipboardData) {
     popup.style.flexWrap = "wrap"; // 🛠 Allow text tags to wrap if necessary
     popup.style.alignItems = "center"; // 🛠 Keep everything aligned
     popup.style.maxWidth = "600px"; // 🛠 Increase width for horizontal layout
+    popup.style.minWidth = "300px"; // 🛠 Ensure a minimum width
     popup.style.gap = "12px"; // 🛠 Add space between elements
     popup.style.overflowX = "hidden"; // 🛠 Hide horizontal scrollbar
     popup.style.overflowY = "auto"; // 🛠 Add vertical scrollbar if neede
@@ -89,19 +99,35 @@ function showClipboardPopup(targetField, clipboardData) {
     popup.style.top = `${rect.bottom + window.scrollY + 8}px`; // 🛠 Keep good spacing from input
     popup.style.left = `${rect.left + window.scrollX}px`;
 
+    // ?? Force Apply Glass Effect
+    popup.style.background = "rgba(20, 50, 90, 0.3)"; // ?? Glassy blue background
+    popup.style.backdropFilter = "blur(2px)"; // ?? Frosted glass effect
+    popup.style.border = "1px solid rgba(255, 255, 255, 0.2)";
+
     // Create close button (X)
     let closeButton = document.createElement("span");
-    closeButton.innerText = "✖";
+    // closeButton.innerText = "✖";
+    closeButton.innerText = "X";
     closeButton.style.position = "absolute";
     closeButton.style.top = "2px";
     closeButton.style.right = "2px";
-    closeButton.style.fontSize = "6px"; // 🛠 Reduce size
+    closeButton.style.fontSize = "14px"; // 🛠 Reduce size
+    closeButton.style.fontWeight = "bold"; // 🛠 Make it more visible
     closeButton.style.color = "#fff";
     closeButton.style.background = "red";
-    closeButton.style.padding = "3px 6px"; // 🛠 Adjust padding for better size
+    closeButton.style.padding = "0px 5px"; // 🛠 Adjust padding for better size
     closeButton.style.borderRadius = "50%";
     closeButton.style.cursor = "pointer";
     closeButton.style.zIndex = "10001"; // 🛠 Ensure it's above text
+
+    // ?? Add Zoom on Hover
+    closeButton.addEventListener("mouseenter", () => {
+        closeButton.style.transform = "scale(1.2)";
+    });
+
+    closeButton.addEventListener("mouseleave", () => {
+        closeButton.style.transform = "scale(1)";
+    });
 
     closeButton.addEventListener("click", () => {
         console.log("Popup closed.");
@@ -136,12 +162,29 @@ function showClipboardPopup(targetField, clipboardData) {
         tag.style.cursor = "pointer";
         tag.style.fontSize = "14px";
         tag.style.whiteSpace = "normal"; // 🛠 Allow text to wra
-        tag.style.wordWrap = "break-word"; // 🛠 Break long word
+        tag.style.wordBreak = "break-all"; // 🛠 Break long words
         tag.style.maxWidth = "100%"; // 🛠 Allow tag to grow
         tag.style.marginRight = "5px"; //check !
         tag.style.userSelect = "none"; // Prevents accidental text selection
         tag.draggable = true; // Enable drag & drop
-        tag.dataset.index = index; // Store original index
+        // tag.dataset.index = index; // Store original index
+        tag.setAttribute("data-index", index); // ?? Ensures attribute is properly set
+        console.log("Set index for:", tag.innerText, "->", index); // Debugging
+
+        // ?? Hover Effect (Zoom)
+        tag.addEventListener("mouseenter", () => {
+            tag.style.transform = "scale(1.08)";
+            tag.style.background = "linear-gradient(135deg, #0099ff, #0066cc)";
+            tag.style.boxShadow = "0px 4px 12px rgba(0, 0, 0, 0.3)";
+        });
+
+        // ?? Reset Effect on Mouse Leave
+        tag.addEventListener("mouseleave", () => {
+            tag.style.transform = "scale(1)";
+            tag.style.background = "linear-gradient(135deg, #007bff, #0056b3)";
+            tag.style.boxShadow = "none";
+        });
+
 
         tag.addEventListener("click", () => {
             // Preserve existing text if already present
@@ -157,18 +200,29 @@ function showClipboardPopup(targetField, clipboardData) {
             popup.remove();
         });
 
-        // Drag & Drop Events
+        // ?? Added new: Add shadow effect while dragging
         tag.addEventListener("dragstart", (event) => {
             event.dataTransfer.setData("text/plain", event.target.dataset.index);
-            tag.style.opacity = "0.5"; // Visual feedback when dragging
+            // tag.classList.add("dragging"); // Apply shadow effect
+            // console.log("Dragging started:", tag.innerText); // Debugging
+            setTimeout(() => {
+                tag.classList.add("dragging"); // ?? Force-add class after a small delay
+            }, 10);
+        
+            console.log("Dragging started:", tag.innerText);
         });
 
         tag.addEventListener("dragend", (event) => {
-            event.target.style.opacity = "1"; // Reset opacity
+            // tag.classList.remove("dragging"); // ?? Ensure class is removed
+            // console.log("Dragging ended"); // Debugging
+            setTimeout(() => {
+                tag.classList.remove("dragging");
+            }, 10);
+            console.log("Dragging ended");
         });
 
         tag.addEventListener("dragover", (event) => {
-            event.preventDefault(); // Allow dropping
+            event.preventDefault();
         });
 
         tag.addEventListener("drop", (event) => {
@@ -182,10 +236,10 @@ function showClipboardPopup(targetField, clipboardData) {
                 let movedItem = newClipboard.splice(draggedIndex, 1)[0];
                 newClipboard.splice(targetIndex, 0, movedItem);
 
-                // Update storage and re-render popup
+                // ?? Save the new order in storage
                 chrome.storage.local.set({ clipboard: newClipboard }, () => {
                     console.log("Clipboard reordered:", newClipboard);
-                    popup.remove();
+                    closeClipboardPopup();
                     showClipboardPopup(targetField, newClipboard);
                 });
             }
@@ -195,12 +249,13 @@ function showClipboardPopup(targetField, clipboardData) {
 
         // Add delete (X) button
         let deleteButton = document.createElement("span");
-        deleteButton.innerText = "✖";
+        deleteButton.innerText = "x";
         deleteButton.style.position = "absolute";
         deleteButton.style.top = "50%";
         deleteButton.style.transform = "translateY(-50%)";
         deleteButton.style.right = "-10px";
         deleteButton.style.fontSize = "6px"; // 🛠 Smaller delete button
+        deleteButton.style.fontSize = "10px"; // 🛠 Smaller delete button
         deleteButton.style.color = "#fff";
         deleteButton.style.cursor = "pointer";
         deleteButton.style.background = "red";
@@ -208,6 +263,15 @@ function showClipboardPopup(targetField, clipboardData) {
         deleteButton.style.borderRadius = "50%";
         deleteButton.style.zIndex = "10001";
         deleteButton.style.display = "none"; // 🛠 Initially hidden
+
+        // // ?? Hover Zoom Effect on Delete Button
+        // deleteButton.addEventListener("mouseenter", () => {
+        //     deleteButton.style.transform = "scale(1.2)";
+        // });
+
+        // deleteButton.addEventListener("mouseleave", () => {
+        //     deleteButton.style.transform = "scale(1)";
+        // });
 
         // Show delete button on hover
         tagContainer.addEventListener("mouseenter", () => deleteButton.style.display = "inline-block");
@@ -222,6 +286,7 @@ function showClipboardPopup(targetField, clipboardData) {
                 showClipboardPopup(targetField, clipboardData);
             });
         });
+        
 
         tagContainer.appendChild(tag);
         tagContainer.appendChild(deleteButton);
@@ -230,15 +295,18 @@ function showClipboardPopup(targetField, clipboardData) {
         
     });
 
-    // Close popup when clicking outside
+    // ?? Ensure Popup Closes When Clicking Outside
     setTimeout(() => {
         document.addEventListener("click", (event) => {
-            if (!popup.contains(event.target) && event.target !== targetField) {
+            let clickedInsidePopup = popup.contains(event.target);
+            let clickedOnInput = event.target === targetField;
+
+            if (!clickedInsidePopup && !clickedOnInput) {
                 console.log("Popup removed (click outside).");
                 popup.remove();
             }
         }, { once: true });
-    }, 100); // Delay ensures we don't close immediately after opening
+    }, 100); // ?? Delay ensures we don’t close immediately after opening
 
     document.body.appendChild(popup);
     console.log("Popup added to DOM.");

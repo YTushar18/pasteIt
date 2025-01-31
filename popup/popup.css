@@ -1,44 +1,124 @@
+General Popup Styling
 body {
-    width: 250px;
-    padding: 10px;
+    width: 280px;
+    padding: 15px;
     font-family: Arial, sans-serif;
     text-align: center;
+    background: #f9f9f9;
+    border-radius: 8px;
+    box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.15);
+    transition: opacity 0.2s ease-in-out, transform 0.2s ease-in-out;
 }
 
+/* Title */
 h2 {
     font-size: 18px;
+    color: #333;
 }
 
+/* Clipboard List Container */
 #clipboard-list {
     display: flex;
     flex-wrap: wrap;
-    gap: 5px;
-    margin: 10px 0;
+    gap: 8px;
+    margin: 12px 0;
     justify-content: center;
+    max-height: 180px; /* Prevents excessive scrolling */
+    overflow-y: auto;
 }
 
+/* Clipboard Items (Snippets) */
 .clipboard-item {
-    padding: 6px 10px;
-    border: 1px solid #007bff;
+    padding: 8px 12px;
+    border: none;
     background: #007bff;
-    color: #fff;
-    border-radius: 5px;
+    color: white;
+    border-radius: 6px;
+    font-size: 14px;
     cursor: pointer;
+    transition: background 0.2s ease-in-out, transform 0.1s ease-in-out;
 }
 
-#clearClipboard {
-    display: block;  /* Ensure it is visible */
-    width: 100%;
-    padding: 8px;
+/* Hover Effect on Clipboard Items */
+.clipboard-item:hover {
+    background: #0056b3;
+    transform: scale(1.05);
+}
+/* ?? Updated: Glass-like popup design */
+#clipboard-popup {
+    position: absolute;
+    background: rgba(20, 50, 90, 0.8)!important;/* ?? Glass effect with blue tint */
+    backdrop-filter: blur(10px)!important; /* ?? Frosted glass effect */
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    padding: 14px;
+    box-shadow: 0px 8px 16px rgba(0, 0, 0, 0.2);
+    border-radius: 12px; /* ?? Softer rounded corners */
+    max-width: 500px;
+    z-index: 10000;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    transition: opacity 0.2s ease-in-out, transform 0.2s ease-in-out;
+}
+
+/* ?? Updated: Clipboard tags (snippets) */
+.clipboard-tag {
+    padding: 10px 14px;
+    border: none;
+    background: linear-gradient(135deg, #007bff, #0056b3); /* ?? Modern gradient */
+    color: white;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background 0.2s ease-in-out, transform 0.1s ease-in-out, box-shadow 0.1s ease-in-out;
+}
+
+/* ?? Updated: Hover effect for clipboard tags */
+.clipboard-tag:hover {
+    background: linear-gradient(135deg, #0099ff, #0066cc); /* ?? Brighter hover effect */
+    transform: scale(1.05); /* ?? Subtle enlargement */
+    box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.3);
+    transform: scale(1.08); /* ?? Slight zoom effect */
+    background: linear-gradient(135deg, #0099ff, #0066cc); /* ?? Slightly brighter color */
+    box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.3); /* ?? Soft shadow */
+}
+
+/* ?? Updated: Active (clicked) effect */
+.clipboard-tag:active {
+    transform: scale(1); /* ?? Prevents staying zoomed when clicked */
+    background: linear-gradient(135deg, #0066cc, #004999);
+}
+
+/* ?? Updated: Close button */
+#clipboard-popup .close-btn {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    font-size: 12px;
     background: red;
     color: white;
-    border: none;
-    border-radius: 5px;
+    border-radius: 50%;
+    padding: 5px;
     cursor: pointer;
-    font-size: 14px;
-    margin-top: 10px; /* Adds spacing */
+    transition: background 0.2s ease-in-out;
 }
 
-#clearClipboard:hover {
+/* ?? Close button hover effect */
+#clipboard-popup .close-btn:hover {
     background: darkred;
+}
+
+/* ?? Updated: Scrollbar styling if needed */
+#clipboard-popup::-webkit-scrollbar {
+    width: 6px;
+}
+
+#clipboard-popup::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.3);
+    border-radius: 3px;
+}
+
+#clipboard-popup::-webkit-scrollbar-track {
+    background: transparent;
 }
