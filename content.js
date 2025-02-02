@@ -1,4 +1,4 @@
-console.log("PasteIt content script loaded!");
+// console.log("PasteIt content script loaded!");
 
 // Helper function to safely access chrome.storage.local
 function getClipboardData(callback) {
@@ -16,7 +16,7 @@ function getClipboardData(callback) {
 // Capture copied text and store it in local storage
 document.addEventListener("copy", async () => {
     let text = document.getSelection().toString().trim();
-    console.log("Copied text:", text);
+    // console.log("Copied text:", text);
 
     if (text !== "") {
         getClipboardData((data) => {
@@ -24,7 +24,7 @@ document.addEventListener("copy", async () => {
             if (!clipboard.includes(text)) {
                 clipboard.push(text);
                 chrome.storage.local.set({ clipboard }, () => {
-                    console.log("Stored in clipboard:", clipboard);
+                    // console.log("Stored in clipboard:", clipboard);
                 });
             }
         });
@@ -38,17 +38,17 @@ let lastPastedValueMap = new WeakMap();
 // Show popup when clicking inside an input field
 document.addEventListener("focusin", (event) => {
     let element = event.target;
-    console.log("Focused on:", element.tagName);
+    // console.log("Focused on:", element.tagName);
 
     if (element.tagName === "INPUT" || element.tagName === "TEXTAREA") {
         // Prevent clearing if the value was pasted by the extension
         // if (lastPastedValueMap.has(element) && element.value === lastPastedValueMap.get(element)) {
-        //     console.log("Preserving pasted text. Not clearing.");
+        //     // console.log("Preserving pasted text. Not clearing.");
         //     return;
         // }
 
         getClipboardData(({ clipboard }) => {
-            console.log("Showing popup for:", element);
+            // console.log("Showing popup for:", element);
             showClipboardPopup(element, clipboard || []);
         });
     }
@@ -67,7 +67,7 @@ function closeClipboardPopup() {
 
 // Function to display popup with clipboard text snippets
 function showClipboardPopup(targetField, clipboardData) {
-    console.log("Popup triggered, clipboard contains:", clipboardData);
+    // console.log("Popup triggered, clipboard contains:", clipboardData);
     if (!clipboardData || clipboardData.length === 0) return;
 
     // Remove existing popup if any
@@ -130,7 +130,7 @@ function showClipboardPopup(targetField, clipboardData) {
     });
 
     closeButton.addEventListener("click", () => {
-        console.log("Popup closed.");
+        // console.log("Popup closed.");
         popup.remove();
     });
 
@@ -169,7 +169,7 @@ function showClipboardPopup(targetField, clipboardData) {
         tag.draggable = true; // Enable drag & drop
         // tag.dataset.index = index; // Store original index
         tag.setAttribute("data-index", index); // ?? Ensures attribute is properly set
-        console.log("Set index for:", tag.innerText, "->", index); // Debugging
+        // console.log("Set index for:", tag.innerText, "->", index); // Debugging
 
         // ?? Hover Effect (Zoom)
         tag.addEventListener("mouseenter", () => {
@@ -187,16 +187,30 @@ function showClipboardPopup(targetField, clipboardData) {
 
 
         tag.addEventListener("click", () => {
-            // Preserve existing text if already present
-            // if (targetField.value.trim() === "" || targetField.value === lastPastedValueMap.get(targetField)) {
-            //     targetField.value = text; // Paste text
-            //     lastPastedValueMap.set(targetField, text); // Store last pasted value
-            // } else {
-            //     console.log("Field already has user-edited content. Not overwriting.");
-            // }
+
             // Replace the text in the field only when a tag is selected
-            targetField.value = text; 
-            targetField.focus(); // Ensure focus stays in the field after pasting
+            // targetField.value = text; 
+            // targetField.focus(); // Ensure focus stays in the field after pasting
+
+            // ?? Check if Sound is Muted Before Playing
+            chrome.storage.local.get("isMuted", (data) => {
+                if (!data.isMuted) {
+                    let clickSound = new Audio(chrome.runtime.getURL("sounds/click.mp3"));
+                    clickSound.volume = 0.5;
+                    clickSound.play();
+                }
+            });
+
+
+            // ?? Fix for input fields that block direct value changes
+            let event = new Event("input", { bubbles: true });
+            let changeEvent = new Event("change", { bubbles: true });
+
+            targetField.value = text;  // ✅ Set value
+            targetField.dispatchEvent(event);  // ✅ Simulate typing event
+            targetField.dispatchEvent(changeEvent);  // ✅ Ensure React/Vue detects change
+            targetField.focus();  // ✅ Keep focus after pasting
+
             popup.remove();
         });
 
@@ -204,21 +218,21 @@ function showClipboardPopup(targetField, clipboardData) {
         tag.addEventListener("dragstart", (event) => {
             event.dataTransfer.setData("text/plain", event.target.dataset.index);
             // tag.classList.add("dragging"); // Apply shadow effect
-            // console.log("Dragging started:", tag.innerText); // Debugging
+            // // console.log("Dragging started:", tag.innerText); // Debugging
             setTimeout(() => {
                 tag.classList.add("dragging"); // ?? Force-add class after a small delay
             }, 10);
         
-            console.log("Dragging started:", tag.innerText);
+            // console.log("Dragging started:", tag.innerText);
         });
 
         tag.addEventListener("dragend", (event) => {
             // tag.classList.remove("dragging"); // ?? Ensure class is removed
-            // console.log("Dragging ended"); // Debugging
+            // // console.log("Dragging ended"); // Debugging
             setTimeout(() => {
                 tag.classList.remove("dragging");
             }, 10);
-            console.log("Dragging ended");
+            // console.log("Dragging ended");
         });
 
         tag.addEventListener("dragover", (event) => {
@@ -231,14 +245,14 @@ function showClipboardPopup(targetField, clipboardData) {
             let targetIndex = event.target.dataset.index;
 
             if (draggedIndex !== targetIndex) {
-                console.log(`Reordering from ${draggedIndex} to ${targetIndex}`);
+                // console.log(`Reordering from ${draggedIndex} to ${targetIndex}`);
                 let newClipboard = [...clipboardData];
                 let movedItem = newClipboard.splice(draggedIndex, 1)[0];
                 newClipboard.splice(targetIndex, 0, movedItem);
 
                 // ?? Save the new order in storage
                 chrome.storage.local.set({ clipboard: newClipboard }, () => {
-                    console.log("Clipboard reordered:", newClipboard);
+                    // console.log("Clipboard reordered:", newClipboard);
                     closeClipboardPopup();
                     showClipboardPopup(targetField, newClipboard);
                 });
@@ -281,7 +295,7 @@ function showClipboardPopup(targetField, clipboardData) {
             event.stopPropagation(); // Prevent tag click from firing
             clipboardData.splice(index, 1);
             chrome.storage.local.set({ clipboard: clipboardData }, () => {
-                console.log("Removed item:", text);
+                // console.log("Removed item:", text);
                 popup.remove(); // Re-render popup
                 showClipboardPopup(targetField, clipboardData);
             });
@@ -302,12 +316,12 @@ function showClipboardPopup(targetField, clipboardData) {
             let clickedOnInput = event.target === targetField;
 
             if (!clickedInsidePopup && !clickedOnInput) {
-                console.log("Popup removed (click outside).");
+                // console.log("Popup removed (click outside).");
                 popup.remove();
             }
         }, { once: true });
     }, 100); // ?? Delay ensures we don’t close immediately after opening
 
     document.body.appendChild(popup);
-    console.log("Popup added to DOM.");
+    // console.log("Popup added to DOM.");
 }
