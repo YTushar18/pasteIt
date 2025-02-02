@@ -1,4 +1,4 @@
-console.log("Smart Clipboard background script loaded!");
+// console.log("PasteIt background script loaded!");
 
 // Initialize clipboard storage when the extension is installed
 chrome.runtime.onInstalled.addListener(() => {
@@ -7,13 +7,13 @@ chrome.runtime.onInstalled.addListener(() => {
             chrome.storage.local.set({ clipboard: [] });
         }
     });
-    console.log("Smart Clipboard Extension Installed.");
+    // console.log("PasteIt Extension Installed.");
 });
 
 // Ensure clipboard persists when Chrome starts
 chrome.runtime.onStartup.addListener(() => {
     chrome.storage.local.get({ clipboard: [] }, (data) => {
-        console.log("Restored clipboard on startup:", data.clipboard);
+        // console.log("Restored clipboard on startup:", data.clipboard);
     });
 
     // Reinject content script into all active tabs on startup
@@ -31,7 +31,7 @@ chrome.runtime.onStartup.addListener(() => {
 
 // Listen for messages from content script
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-    console.log("Message received in background:", message);
+    // console.log("Message received in background:", message);
 
     if (message.action === "copy_text" && sender.tab) {
         chrome.scripting.executeScript({
@@ -51,14 +51,32 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 function autoClearClipboard(minutes) {
     setTimeout(() => {
         chrome.storage.local.set({ clipboard: [] }, () => {
-            console.log(`Clipboard auto-cleared after ${minutes} minutes.`);
+            // console.log(`Clipboard auto-cleared after ${minutes} minutes.`);
         });
     }, minutes * 60 * 1000);
 }
 
-chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-    if (message.action === "reloadContentScript") {
-        console.log("Reloading content script...");
-        sendResponse({ status: "Content script reload attempted." });
+chrome.runtime.onInstalled.addListener(() => {
+    // console.log("✅ Extension installed or updated!");
+});
+
+chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+    if (request.action === "reloadContentScript") {
+        // console.log("🔄 Received request to reload content script...");
+
+        chrome.scripting.executeScript(
+            {
+                target: { allFrames: true },
+                files: ["content.js"],
+            },
+            () => {
+                if (chrome.runtime.lastError) {
+                    console.error("❌ Failed to inject content script:", chrome.runtime.lastError);
+                } else {
+                    // console.log("✅ Content script re-injected successfully!");
+                }
+            }
+        );
+        sendResponse({ success: true });
     }
 });

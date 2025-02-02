@@ -1,17 +1,14 @@
-📋 Smart Clipboard - Your Ultimate Copy-Paste Manager 🚀
+📋 PasteIt - Your Ultimate Copy-Paste Manager 🚀
 
-📌 Smart Clipboard is a powerful browser extension that lets you store multiple copied text snippets, autofill forms, and reorder your clipboard with drag & drop. Whether you’re filling out job applications, saving reusable text, or just copying multiple things at once, this extension makes life easier!
+📌 PasteIt is a powerful browser extension that lets you store multiple copied text snippets, autofill forms, and reorder your clipboard with drag & drop. Whether you’re filling out job applications, saving reusable text, or just copying multiple things at once, this extension makes life easier!
 
 ✨ Features
 
 🔹 Core Clipboard Functions
 
 ✅ Multi-Text Clipboard – Store multiple copied snippets for easy access.
-
 ✅ Click-to-Paste – Instantly paste a stored snippet into any input field.
-
 ✅ Persistent Storage – Clipboard stays even after browser restart.
-
 ✅ Popup UI – Click inside a text field to see the floating clipboard.
 
 🔹 Clipboard Management
@@ -40,14 +37,16 @@
 🔹 Drag & Drop to Rearrange
 🔹 Click to Paste a Snippet
 🔹 Delete or Clear Clipboard
-(Add screenshots or GIFs here!)
+![image](https://github.com/user-attachments/assets/57a85909-58b3-4e6f-9801-3b7786c0a1f6)
+![image](https://github.com/user-attachments/assets/10ae310a-905f-494c-b244-a89e42f1dad9)
+
 
 🔧 Installation
 
 📦 From Chrome Web Store (Coming Soon 🚀)
 
 1️⃣ Open Chrome Web Store
-2️⃣ Search for Smart Clipboard
+2️⃣ Search for PasteIt
 3️⃣ Click Add to Chrome
 
 🛠 Manual Installation (Developer Mode)
@@ -79,15 +78,6 @@ git clone https://github.com/yourusername/smart-clipboard.git
 cd smart-clipboard
 code .
 
-Contributing Guidelines
-
-🔹 Fork this repository
-🔹 Create a new branch for your feature
-🔹 Make your changes and commit
-🔹 Create a pull request
-
-🛠 Want to contribute? Check out CONTRIBUTING.md
-
 🚀 Future Features & Roadmap
 
 🔜 📌 Pin Important Snippets – Keep your favorite snippets at the top.
@@ -96,7 +86,7 @@ Contributing Guidelines
 🔜 🌍 Sync Across Devices – Chrome Sync to access snippets anywhere.
 🔜 🚀 Publish on Chrome Web Store – Make it available to everyone.
 
-💡 Why Smart Clipboard?
+💡 Why PasteIt?
 
 🔹 Boosts Productivity – No more losing copied text!
 🔹 Perfect for Job Applications – Autofill resumes & forms effortlessly.
@@ -109,15 +99,14 @@ This project is licensed under the MIT License. See LICENSE for details.
 
 💬 Connect & Feedback
 
-📧 Email: your.email@example.com
-🐦 Twitter: @yourhandle
-💼 LinkedIn: Your LinkedIn
+📧 Email: tushar18yadav@outlook.com
+
+💼 LinkedIn: [Your LinkedIn](https://www.linkedin.com/in/tusharyadav1812/)
 
 🔹 Found a bug? Open an issue in the Issues tab
 🔹 Suggestions? Let’s improve it together! 🚀
 
 🌟 If you like this project, don’t forget to give it a star! ⭐
 
-🔥 Ready to take your clipboard to the next level? Download Smart Clipboard Now! 🚀
+🔥 Ready to take your clipboard to the next level? Download PasteIt Now! 🚀
 
-Let me know if you want any changes or additions! 😃🔥
