@@ -37,7 +37,9 @@
 🔹 Drag & Drop to Rearrange
 🔹 Click to Paste a Snippet
 🔹 Delete or Clear Clipboard
-(Add screenshots or GIFs here!)
+![image](https://github.com/user-attachments/assets/57a85909-58b3-4e6f-9801-3b7786c0a1f6)
+![image](https://github.com/user-attachments/assets/10ae310a-905f-494c-b244-a89e42f1dad9)
+
 
 🔧 Installation
 
