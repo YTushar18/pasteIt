@@ -75,3 +75,17 @@ body {
 #muteToggle:hover {
     background: #0056b3;
 }
+
+#clipboard-popup {
+    user-select: none;  /* Prevent text selection while dragging */
+}
+
+#clipboard-popup:hover {
+    box-shadow: 0px 8px 20px rgba(0, 0, 0, 0.3);
+}
+
+/* Styling for drag handle */
+#clipboard-popup div:first-child {
+    cursor: grab;
+    user-select: none;
+}

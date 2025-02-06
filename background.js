@@ -1,82 +1,98 @@
-// console.log("PasteIt background script loaded!");
-
-// Initialize clipboard storage when the extension is installed
+// ?? Ensure we remove all existing menu items before adding new ones
 chrome.runtime.onInstalled.addListener(() => {
-    chrome.storage.local.get({ clipboard: [] }, (data) => {
-        if (!data.clipboard) {
-            chrome.storage.local.set({ clipboard: [] });
-        }
-    });
-    // console.log("PasteIt Extension Installed.");
+    createContextMenu();
 });
 
-// Ensure clipboard persists when Chrome starts
-chrome.runtime.onStartup.addListener(() => {
-    chrome.storage.local.get({ clipboard: [] }, (data) => {
-        // console.log("Restored clipboard on startup:", data.clipboard);
-    });
+function createContextMenu() {
+    chrome.contextMenus.removeAll(() => { // ✅ Clears old menu items before adding new ones
+        console.log("✅ Cleared existing context menu items");
 
-    // Reinject content script into all active tabs on startup
-    chrome.tabs.query({}, (tabs) => {
-        for (let tab of tabs) {
-            if (tab.url && tab.id) {
+        // ?? Create main "PasteIt" menu
+        chrome.contextMenus.create({
+            id: "pasteit",
+            title: "PasteIt",
+            contexts: ["editable"]
+        });
+
+        // ?? Add clipboard items dynamically
+        chrome.storage.local.get("clipboard", (data) => {
+            let clipboardItems = data.clipboard || [];
+            clipboardItems.forEach((text, index) => {
+                chrome.contextMenus.create({
+                    id: `pasteit-${index}`,
+                    parentId: "pasteit",
+                    title: text.length > 30 ? text.substring(0, 30) + "..." : text, // Truncate long text
+                    contexts: ["editable"]
+                });
+            });
+        });
+
+        // ?? Add "Clear Clipboard" Option
+        chrome.contextMenus.create({
+            id: "clear_clipboard",
+            parentId: "pasteit",
+            title: "🗑️ Clear Clipboard",
+            contexts: ["editable"]
+        });
+    });
+}
+
+// ?? Handle right-click menu actions
+chrome.contextMenus.onClicked.addListener((info, tab) => {
+    if (info.menuItemId.startsWith("pasteit-")) {
+        chrome.storage.local.get("clipboard", (data) => {
+            let clipboardItems = data.clipboard || [];
+            let index = parseInt(info.menuItemId.replace("pasteit-", ""), 10);
+            let selectedText = clipboardItems[index];
+
+            if (selectedText) {
                 chrome.scripting.executeScript({
                     target: { tabId: tab.id },
-                    files: ["content.js"]
-                }).catch(err => console.warn("Error injecting script:", err));
+                    func: pasteTextIntoField,
+                    args: [selectedText]
+                });
             }
-        }
-    });
-});
-
-// Listen for messages from content script
-chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-    // console.log("Message received in background:", message);
-
-    if (message.action === "copy_text" && sender.tab) {
-        chrome.scripting.executeScript({
-            target: { tabId: sender.tab.id },
-            function: () => {
-                document.execCommand("copy");
-            }
-        }).catch(err => console.warn("Error executing copy:", err));
-
-        sendResponse({ status: "Copied!" });
-    } else {
-        sendResponse({ status: "No action taken." });
+        });
+    } else if (info.menuItemId === "clear_clipboard") {
+        chrome.storage.local.set({ clipboard: [] }, () => {
+            createContextMenu(); // ✅ Refresh context menu after clearing
+            chrome.scripting.executeScript({
+                target: { tabId: tab.id },
+                func: closeClipboardPopup
+            });
+        });
     }
 });
 
-// Optional: Auto-clear clipboard after a set time (future feature)
-function autoClearClipboard(minutes) {
-    setTimeout(() => {
-        chrome.storage.local.set({ clipboard: [] }, () => {
-            // console.log(`Clipboard auto-cleared after ${minutes} minutes.`);
-        });
-    }, minutes * 60 * 1000);
+// ?? Function to insert text into focused input field
+function pasteTextIntoField(text) {
+    let activeElement = document.activeElement;
+    if (activeElement && (activeElement.tagName === "INPUT" || activeElement.tagName === "TEXTAREA")) {
+        activeElement.value = text;
+        activeElement.dispatchEvent(new Event("input", { bubbles: true }));
+    }
 }
 
-chrome.runtime.onInstalled.addListener(() => {
-    // console.log("✅ Extension installed or updated!");
+// ?? Close clipboard popup function
+function closeClipboardPopup() {
+    let popup = document.getElementById("clipboard-popup");
+    if (popup) popup.remove();
+}
+
+// ?? Auto-update context menu when clipboard changes
+chrome.storage.onChanged.addListener((changes, area) => {
+    if (area === "local" && changes.clipboard) {
+        createContextMenu();
+    }
 });
 
-chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
-    if (request.action === "reloadContentScript") {
-        // console.log("🔄 Received request to reload content script...");
-
-        chrome.scripting.executeScript(
-            {
-                target: { allFrames: true },
-                files: ["content.js"],
-            },
-            () => {
-                if (chrome.runtime.lastError) {
-                    console.error("❌ Failed to inject content script:", chrome.runtime.lastError);
-                } else {
-                    // console.log("✅ Content script re-injected successfully!");
-                }
-            }
-        );
-        sendResponse({ success: true });
+chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
+    if (changeInfo.status === "complete" && tab.url) {
+        if (!tab.url.startsWith("https://chrome.google.com/webstore") && !tab.url.startsWith("chrome://")) {
+            chrome.scripting.executeScript({
+                target: { tabId: tabId },
+                files: ["content.js"]
+            }).catch(err => console.warn("Script execution blocked:", err));
+        }
     }
 });
